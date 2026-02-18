@@ -156,16 +156,21 @@ function generateSkyGradient(timezone: string, centerTime: number, lat?: number,
 }
 
 function getTzLabel(dt: DateTime, full: boolean): string {
-  // Force en-US locale so we always get English abbreviations (PST, EST, CET…)
-  // regardless of the user's browser locale
+  // Try system locale first (gives CET/EET for European zones), then en-US
+  // (gives PST/EST for US zones that system locale returns in another script).
+  // Take whichever yields a clean letters-only abbreviation first.
   let abbr = '';
-  try {
-    const parts = new Intl.DateTimeFormat('en-US', {
-      timeZone: dt.zoneName ?? undefined,
-      timeZoneName: 'short',
-    }).formatToParts(new Date(dt.toMillis()));
-    abbr = parts.find((p) => p.type === 'timeZoneName')?.value ?? '';
-  } catch { /* ignore */ }
+  const date = new Date(dt.toMillis());
+  for (const locale of [undefined, 'en-US'] as const) {
+    try {
+      const parts = new Intl.DateTimeFormat(locale, {
+        timeZone: dt.zoneName ?? undefined,
+        timeZoneName: 'short',
+      }).formatToParts(date);
+      const candidate = parts.find((p) => p.type === 'timeZoneName')?.value ?? '';
+      if (/^[A-Za-z]+$/.test(candidate)) { abbr = candidate; break; }
+    } catch { /* ignore */ }
+  }
 
   const offsetMin = dt.offset;
   const sign = offsetMin >= 0 ? '+' : '\u2212'; // proper minus sign
