@@ -156,7 +156,17 @@ function generateSkyGradient(timezone: string, centerTime: number, lat?: number,
 }
 
 function getTzLabel(dt: DateTime, full: boolean): string {
-  const abbr = dt.offsetNameShort ?? '';
+  // Force en-US locale so we always get English abbreviations (PST, EST, CET…)
+  // regardless of the user's browser locale
+  let abbr = '';
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: dt.zoneName ?? undefined,
+      timeZoneName: 'short',
+    }).formatToParts(new Date(dt.toMillis()));
+    abbr = parts.find((p) => p.type === 'timeZoneName')?.value ?? '';
+  } catch { /* ignore */ }
+
   const offsetMin = dt.offset;
   const sign = offsetMin >= 0 ? '+' : '\u2212'; // proper minus sign
   const absMin = Math.abs(offsetMin);
