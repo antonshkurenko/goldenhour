@@ -783,7 +783,7 @@ export default function App() {
         {cities.length > 1 && (
           <button
             onClick={() => removeCity(city.id)}
-            className="absolute top-2 right-2 z-20 p-1 rounded-full bg-black/30 text-white/70 hover:bg-black/50 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+            className="absolute top-2 right-2 z-20 p-1 rounded-full bg-black/30 text-white/70 hover:bg-black/50 hover:text-white opacity-60 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity cursor-pointer"
           >
             <X size={14} />
           </button>
@@ -811,8 +811,9 @@ export default function App() {
           <h1 className="text-lg font-bold tracking-tight">Golden Hour</h1>
         </div>
 
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-stone-400">
+        <div className="flex items-center gap-2">
+          {/* Date — hidden on mobile */}
+          <span className="hidden sm:block text-sm text-stone-400">
             {centerLocal.toFormat('MMM d, yyyy')}
           </span>
 
@@ -826,7 +827,7 @@ export default function App() {
             className="flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-700 text-xs font-medium transition-colors cursor-pointer"
           >
             <Clock size={12} />
-            <span>Now</span>
+            <span className="hidden sm:inline">Now</span>
           </button>
 
           {/* Time format toggle */}
@@ -846,8 +847,8 @@ export default function App() {
             ))}
           </div>
 
-          {/* View mode toggle */}
-          <div className="flex rounded-lg bg-stone-200 p-0.5 text-xs">
+          {/* View mode toggle — hidden on mobile */}
+          <div className="hidden sm:flex rounded-lg bg-stone-200 p-0.5 text-xs">
             {(['auto', 'beautiful', 'compact'] as ViewMode[]).map((mode) => (
               <button
                 key={mode}
@@ -866,10 +867,10 @@ export default function App() {
           {/* Add city button */}
           <button
             onClick={() => setSearchOpen(true)}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-stone-200 hover:bg-stone-300 text-sm transition-colors cursor-pointer"
+            className="flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-lg bg-stone-200 hover:bg-stone-300 text-sm transition-colors cursor-pointer"
           >
             <Plus size={14} />
-            <span>Add City</span>
+            <span className="hidden sm:inline">Add City</span>
           </button>
         </div>
       </header>
