@@ -155,6 +155,19 @@ function generateSkyGradient(timezone: string, centerTime: number, lat?: number,
   return `linear-gradient(to right, ${stops.join(', ')})`;
 }
 
+function getTzLabel(dt: DateTime, full: boolean): string {
+  const abbr = dt.offsetNameShort ?? '';
+  const offsetMin = dt.offset;
+  const sign = offsetMin >= 0 ? '+' : '\u2212'; // proper minus sign
+  const absMin = Math.abs(offsetMin);
+  const h = Math.floor(absMin / 60);
+  const m = absMin % 60;
+  const utcStr = m === 0 ? `UTC${sign}${h}` : `UTC${sign}${h}:${m.toString().padStart(2, '0')}`;
+  const isRealAbbr = /^[A-Za-z]+$/.test(abbr);
+  if (!full) return isRealAbbr ? abbr : utcStr;
+  return isRealAbbr ? `${abbr} · ${utcStr}` : utcStr;
+}
+
 function getSolarIcon(hour: number) {
   const h = ((hour % 24) + 24) % 24;
   if (h >= 7 && h < 17) return Sun;
@@ -768,11 +781,9 @@ export default function App() {
                     </span>
                   )}
                 </div>
-                {effectiveMode === 'beautiful' && (
-                  <div className="text-xs text-white/70 drop-shadow">
-                    {city.timezone}
-                  </div>
-                )}
+                <div className="text-xs text-white/70 drop-shadow">
+                  {getTzLabel(centerDt, effectiveMode === 'beautiful')}
+                </div>
               </div>
             </div>
           </div>
