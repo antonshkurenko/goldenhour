@@ -155,21 +155,63 @@ function generateSkyGradient(timezone: string, centerTime: number, lat?: number,
   return `linear-gradient(to right, ${stops.join(', ')})`;
 }
 
+// Hardcoded abbreviations for the WET/CET/EET group — Intl returns these
+// inconsistently across browsers and locales (Chrome en-US gives "GMT+1",
+// French gives "UTC", etc.). [standard/winter, daylight/summer]
+const EU_TZ_ABBR: Record<string, [string, string]> = {
+  'Europe/Lisbon':      ['WET',  'WEST'],
+  'Europe/London':      ['GMT',  'BST'],
+  'Europe/Dublin':      ['GMT',  'IST'],
+  'Atlantic/Reykjavik': ['GMT',  'GMT'],
+  'Europe/Amsterdam':   ['CET',  'CEST'],
+  'Europe/Belgrade':    ['CET',  'CEST'],
+  'Europe/Berlin':      ['CET',  'CEST'],
+  'Europe/Brussels':    ['CET',  'CEST'],
+  'Europe/Budapest':    ['CET',  'CEST'],
+  'Europe/Copenhagen':  ['CET',  'CEST'],
+  'Europe/Madrid':      ['CET',  'CEST'],
+  'Europe/Oslo':        ['CET',  'CEST'],
+  'Europe/Paris':       ['CET',  'CEST'],
+  'Europe/Prague':      ['CET',  'CEST'],
+  'Europe/Rome':        ['CET',  'CEST'],
+  'Europe/Stockholm':   ['CET',  'CEST'],
+  'Europe/Vienna':      ['CET',  'CEST'],
+  'Europe/Warsaw':      ['CET',  'CEST'],
+  'Europe/Zagreb':      ['CET',  'CEST'],
+  'Europe/Zurich':      ['CET',  'CEST'],
+  'Europe/Athens':      ['EET',  'EEST'],
+  'Europe/Bucharest':   ['EET',  'EEST'],
+  'Europe/Helsinki':    ['EET',  'EEST'],
+  'Europe/Kyiv':        ['EET',  'EEST'],
+  'Europe/Riga':        ['EET',  'EEST'],
+  'Europe/Sofia':       ['EET',  'EEST'],
+  'Europe/Tallinn':     ['EET',  'EEST'],
+  'Europe/Vilnius':     ['EET',  'EEST'],
+};
+
 function getTzLabel(dt: DateTime, full: boolean): string {
-  // Try system locale first (gives CET/EET for European zones), then en-US
-  // (gives PST/EST for US zones that system locale returns in another script).
-  // Take whichever yields a clean letters-only abbreviation first.
+  const tz = dt.zoneName ?? '';
   let abbr = '';
-  const date = new Date(dt.toMillis());
-  for (const locale of [undefined, 'en-US'] as const) {
-    try {
-      const parts = new Intl.DateTimeFormat(locale, {
-        timeZone: dt.zoneName ?? undefined,
-        timeZoneName: 'short',
-      }).formatToParts(date);
-      const candidate = parts.find((p) => p.type === 'timeZoneName')?.value ?? '';
-      if (/^[A-Za-z]+$/.test(candidate)) { abbr = candidate; break; }
-    } catch { /* ignore */ }
+
+  const euEntry = EU_TZ_ABBR[tz];
+  if (euEntry) {
+    // Use January offset to distinguish standard vs daylight
+    const janOffset = dt.set({ month: 1, day: 15 }).offset;
+    abbr = dt.offset === janOffset ? euEntry[0] : euEntry[1];
+  } else {
+    // For everything else (Americas, Asia, Africa, Oceania…) Intl is consistent.
+    // Try system locale first, then en-US as fallback.
+    const date = new Date(dt.toMillis());
+    for (const locale of [undefined, 'en-US'] as const) {
+      try {
+        const parts = new Intl.DateTimeFormat(locale, {
+          timeZone: tz || undefined,
+          timeZoneName: 'short',
+        }).formatToParts(date);
+        const candidate = parts.find((p) => p.type === 'timeZoneName')?.value ?? '';
+        if (/^[A-Za-z]+$/.test(candidate)) { abbr = candidate; break; }
+      } catch { /* ignore */ }
+    }
   }
 
   const offsetMin = dt.offset;
